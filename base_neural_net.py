@@ -1,6 +1,7 @@
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
 import pandas as pd
+import numpy as np
 import os
 
 os.chdir(r'C:\Users\jwade\OneDrive - University of Tennessee\Masters Program\BZAN 554 - Deep Learning for Business\Group Assignment - 2')
@@ -11,7 +12,7 @@ DATA = pd.read_csv('pricing.csv')
 
 # Split into X and Y
 Y = DATA.pop('quantity')
-X = DATA
+X = np.array(np.column_stack((X1,X2,X3,X4,X5))) 
 
 # Split into train and test
 X_train, X_test, Y_train, Y_test = train_test_split(X,Y,test_size=0.2)
