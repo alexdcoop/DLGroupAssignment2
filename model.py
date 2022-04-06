@@ -1,5 +1,4 @@
 #This is the final model file
-from ast import Expression
 import tensorflow as tf
 import tensorflow as tf
 from tensorflow import keras
@@ -23,20 +22,41 @@ X = np.array(np.column_stack((DATA['sku'],DATA['price'],DATA['order'],DATA['dura
 X_train, X_test, Y_train, Y_test = train_test_split(X,Y,test_size=0.2)
 
 
-def createNeuralNet(batchSize, learning_rate, numHiddenLayers, numHiddenNeurons, hiddenActivationFunction, optimizer, epochs):
+def createNeuralNet(learning_rate, numHiddenLayers, numHiddenNeurons, hiddenActivationFunction, optimizer):
     inputs = tf.keras.layers.Input(shape=(X.shape[1],), name='input') #Note: shape is a tuple and does not include records. For a two dimensional input dataset, use (Nbrvariables,). We would use the position after the comma, if it would be a 3-dimensional tensor (e.g., images). Note that (something,) does not create a second dimension. It is just Python's way of generating a tuple (which is required by the Input layer).
     hidden = tf.keras.layers.Dense(units=numHiddenNeurons, activation=hiddenActivationFunction)(inputs)
     
-    for layer in numHiddenLayers - 1:
+    for layer in range(numHiddenLayers):
         hidden = tf.keras.layers.Dense(units=numHiddenNeurons, activation=hiddenActivationFunction)(hidden)
 
     output = tf.keras.layers.Dense(units=1, activation = "linear", name= 'output')(hidden)
     
     #Create model 
     model = tf.keras.Model(inputs = inputs, outputs = output)
+    
+    #make opimizer
+    if optimizer == 'plain SGD':
+        optimizerCode = tf.keras.optimizers.SGD(learning_rate = learning_rate)
+    elif optimizer == 'momentum':
+        optimizerCode = tf.keras.optimizers.SGD(learning_rate = learning_rate, momentum = .9) #Hardcoded optimizer
+    elif optimizer == 'nesterov':
+        optimizerCode = tf.keras.optimizers.SGD(learning_rate = learning_rate, momentum = .9, nesterov=True)
+    elif optimizer == 'adagrad':
+        optimizerCode = tf.keras.optimzers.Adagrad(learning_rate=learning_rate, initial_accumulator_value=0.1, epsilon=1e-07)
+    elif optimizer == 'rmsprop':
+        optimizerCode = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, rho=.9,momentum=0.0,epsilon=1e-07)
+    elif optimizer == 'adam':
+        optimizerCode = tf.keras.optimizers.Adam(learning_rate=learning_rate, beta_1=.9,beta_2=.999,epsilon=1e-07)
+    elif optimizer == 'learning rate scheduling':
+        initial_learning_rate = learning_rate; decay_steps = 10000; decay_rate = .95
+        learning_sched = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_rate,decay_steps, decay_rate)
+        optimizerCode = tf.keras.optimzers.SGD(learning_rate=learning_sched)
+    else:
+        print('Error making optimizer')
+        return -1
 
     #Compile model
-    model.compile(loss = 'mse', optimizer = tf.keras.optimizers.SGD(learning_rate = 0.001))
+    model.compile(loss = 'mse', optimizer = optimizerCode, metrics=['accuracy'])
 
     #return model
     return model
@@ -67,7 +87,7 @@ def createModel(learning_rate, num_hid_layers, num_hid_neurons, hid_activation,o
     elif optimizer == 'nesterov':
         optimizerCode = tf.keras.optimizers.SGD(learning_rate = learning_rate, momentum = .9, nesterov=True)
     elif optimizer == 'adagrad':
-        optimizerCode = tf.keras.optimzers.Adagrad(learning_rate=learning_rate, initial_accumulator_value=0.1, epsilon=1e-07)
+        optimizerCode = tf.keras.optimizers.Adagrad(learning_rate=learning_rate, initial_accumulator_value=0.1, epsilon=1e-07)
     elif optimizer == 'rmsprop':
         optimizerCode = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, rho=.9,momentum=0.0,epsilon=1e-07)
     elif optimizer == 'adam':
@@ -75,7 +95,7 @@ def createModel(learning_rate, num_hid_layers, num_hid_neurons, hid_activation,o
     elif optimizer == 'learning rate scheduling':
         initial_learning_rate = learning_rate; decay_steps = 10000; decay_rate = .95
         learning_sched = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_rate,decay_steps, decay_rate)
-        optimizerCode = tf.keras.optimzers.SGD(learning_rate=learning_sched)
+        optimizerCode = tf.keras.optimizers.SGD(learning_rate=learning_sched)
     else:
         print('Error making optimizer')
         return -1
