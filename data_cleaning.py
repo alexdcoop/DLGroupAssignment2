@@ -12,7 +12,7 @@ attributes = ["price","quantity","duration","category"]
 pd.plotting.scatter_matrix(pricing[attributes], figsize=(12,8))#does this show up for anyone? Should be like 16 plots
 
 #1. Check for nulls
-pricing.isnull().any() #No nulls in any column 
+pricing.isnull().any() #No nulls in any column...yay. 
 
 #2. turn categorical values into dummies
 pricing.dtypes #which columns are categorical?
