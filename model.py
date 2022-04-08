@@ -1,5 +1,6 @@
 #This is the final model file
 from asyncio.unix_events import BaseChildWatcher
+from sklearn.metrics import log_loss
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -12,6 +13,7 @@ from keras.layers import Dense
 from keras.wrappers.scikit_learn import KerasRegressor
 from sklearn.model_selection import RepeatedStratifiedKFold
 from ann_visualizer.visualize import ann_viz
+import matplotlib as plt
 
 #1. Prepare data
 # Read in data
@@ -78,6 +80,25 @@ initializer=['glorot_uniform', 'glorot_normal', 'he_normal', 'he_uniform']
 param_grid= dict(learning_rate = learning_rate, num_hid_layers=num_hid_layers, num_hid_neurons=num_hid_neurons, hid_activation=hid_activation,optimizer=optimizer, initializer=initializer)
 
 #3. Create a function that takes values of the grid, and returns a compiled model architecture 
+#input the values we've created, function goes inside the for loop so that each iteration spits out loss per epoch, we store all losses for all epochs in an array
+#for loop - call create model function, outputs model that's ready for training, then start new for loop in which we start getting data and fitting the model that we've just created, at the end of every epoch, compute loss on validation and store in out grid table (5 epoch is 5 values stored in the grid table). It's a series of loops. 
+# first pulls in options from the grid, second loop pulls in a subsetted set of our data to then train the model created in the first layer of the for loop. 
+#2nd for loop: capture each epoch's loss in an array and then that array goes into our overall grid into a loss column which is what we should then plot.
+
+for record in grid: 
+    CreateModel(record)
+    loss_array = []
+    for _ in range(epochs):
+        for a_ in range(len(records)): #this is the subsetted data that gets pulled into the lower part of the for loop to train the model 
+            model.fit(epochs=1, batch_size=1) #could also do mini batch
+        make a prediction on entire validation set and compute average log_loss
+        loss_array.append(avg_loss) #append average loss to an array additional column in grid 
+    store loss array in last column of grid grid['new column'] = loss_array (keep a counter)    
+
+            
+#early stopping? stop computations if the model starts to overfit, so we could do early stopping but this won't be necessary if we aren't doing many epochs 
+
+
 def createModel(learning_rate, num_hid_layers, num_hid_neurons, hid_activation, optimizer, initializer):
     #Create model
     model = keras.Sequential()
@@ -90,7 +111,7 @@ def createModel(learning_rate, num_hid_layers, num_hid_neurons, hid_activation, 
         model.add(layers.Dense(units=num_hid_neurons, activation=hid_activation, kernel_initializer=initializer))
         
     #output layer
-    model.add(layers.Dense(units=1, activation = "softmax",kernel_initializer=initializer))
+    model.add(layers.Dense(units=1, activation = "linear",kernel_initializer=initializer))
     
     #make opimizer
     if optimizer == 'plain SGD':
@@ -159,3 +180,7 @@ y = model.predict(X_test)
 #5. Plot results
 
 ann_viz(model, title="Our Neural Network", filename="dlproj2.gv", view = True) #should produce a visual of the neural net
+
+#make a plot of 
+plt.plot()
+plt.show()
