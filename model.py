@@ -1,4 +1,5 @@
 #This is the final model file
+from asyncio.unix_events import BaseChildWatcher
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -23,44 +24,44 @@ X = np.array(np.column_stack((DATA['sku'],DATA['price'],DATA['order'],DATA['dura
 X_train, X_test, Y_train, Y_test = train_test_split(X,Y,test_size=0.2)
 
 
-def createNeuralNet(learning_rate, numHiddenLayers, numHiddenNeurons, hiddenActivationFunction, optimizer):
-    inputs = tf.keras.layers.Input(shape=(X.shape[1],), name='input') #Note: shape is a tuple and does not include records. For a two dimensional input dataset, use (Nbrvariables,). We would use the position after the comma, if it would be a 3-dimensional tensor (e.g., images). Note that (something,) does not create a second dimension. It is just Python's way of generating a tuple (which is required by the Input layer).
-    hidden = tf.keras.layers.Dense(units=numHiddenNeurons, activation=hiddenActivationFunction)(inputs)
+# def createNeuralNet(learning_rate, num_hid_layers, num_hid_neurons, hid_activation, optimizer):
+#     inputs = tf.keras.layers.Input(shape=(X.shape[1],), name='input') #Note: shape is a tuple and does not include records. For a two dimensional input dataset, use (Nbrvariables,). We would use the position after the comma, if it would be a 3-dimensional tensor (e.g., images). Note that (something,) does not create a second dimension. It is just Python's way of generating a tuple (which is required by the Input layer).
+#     hidden = tf.keras.layers.Dense(units=num_hid_neurons, activation=hid_activation)(inputs)
     
-    for layer in range(numHiddenLayers):
-        hidden = tf.keras.layers.Dense(units=numHiddenNeurons, activation=hiddenActivationFunction)(hidden)
+#     for layer in range(num_hid_layers):
+#         hidden = tf.keras.layers.Dense(units=num_hid_neurons, activation=hid_activation)(hidden)
 
-    output = tf.keras.layers.Dense(units=1, activation = "linear", name= 'output')(hidden)
+#     output = tf.keras.layers.Dense(units=1, activation = "linear", name= 'output')(hidden)
     
-    #Create model 
-    model = tf.keras.Model(inputs = inputs, outputs = output)
+#     #Create model 
+#     model = tf.keras.Model(inputs = inputs, outputs = output)
     
-    #make opimizer
-    if optimizer == 'plain SGD':
-        optimizerCode = tf.keras.optimizers.SGD(learning_rate = learning_rate)
-    elif optimizer == 'momentum':
-        optimizerCode = tf.keras.optimizers.SGD(learning_rate = learning_rate, momentum = .9) #Hardcoded optimizer
-    elif optimizer == 'nesterov':
-        optimizerCode = tf.keras.optimizers.SGD(learning_rate = learning_rate, momentum = .9, nesterov=True)
-    elif optimizer == 'adagrad':
-        optimizerCode = tf.keras.optimizers.Adagrad(learning_rate=learning_rate, initial_accumulator_value=0.1, epsilon=1e-07)
-    elif optimizer == 'rmsprop':
-        optimizerCode = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, rho=.9,momentum=0.0,epsilon=1e-07)
-    elif optimizer == 'adam':
-        optimizerCode = tf.keras.optimizers.Adam(learning_rate=learning_rate, beta_1=.9,beta_2=.999,epsilon=1e-07)
-    elif optimizer == 'learning rate scheduling':
-        initial_learning_rate = learning_rate; decay_steps = 10000; decay_rate = .95
-        learning_sched = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_rate,decay_steps, decay_rate)
-        optimizerCode = tf.keras.optimizers.SGD(learning_rate=learning_sched)
-    else:
-        print('Error making optimizer')
-        return -1
+#     #make opimizer
+#     if optimizer == 'plain SGD':
+#         optimizerCode = tf.keras.optimizers.SGD(learning_rate = learning_rate)
+#     elif optimizer == 'momentum':
+#         optimizerCode = tf.keras.optimizers.SGD(learning_rate = learning_rate, momentum = .9) #Hardcoded optimizer
+#     elif optimizer == 'nesterov':
+#         optimizerCode = tf.keras.optimizers.SGD(learning_rate = learning_rate, momentum = .9, nesterov=True)
+#     elif optimizer == 'adagrad':
+#         optimizerCode = tf.keras.optimizers.Adagrad(learning_rate=learning_rate, initial_accumulator_value=0.1, epsilon=1e-07)
+#     elif optimizer == 'rmsprop':
+#         optimizerCode = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, rho=.9,momentum=0.0,epsilon=1e-07)
+#     elif optimizer == 'adam':
+#         optimizerCode = tf.keras.optimizers.Adam(learning_rate=learning_rate, beta_1=.9,beta_2=.999,epsilon=1e-07)
+#     elif optimizer == 'learning rate scheduling':
+#         initial_learning_rate = learning_rate; decay_steps = 10000; decay_rate = .95
+#         learning_sched = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_rate,decay_steps, decay_rate)
+#         optimizerCode = tf.keras.optimizers.SGD(learning_rate=learning_sched)
+#     else:
+#         print('Error making optimizer')
+#         return -1
 
-    #Compile model
-    model.compile(loss = 'mse', optimizer = optimizerCode, metrics=['accuracy'])
+#     #Compile model
+#     model.compile(loss = 'mse', optimizer = optimizerCode)
 
-    #return model
-    return model
+#     #return model
+#     return model
     
 #Make Grid of all possible parameters
 #param_grid = [{'learning_rate':[.001,.01,.1,.2,.3], 'num_hid_layers':[5,4,3,2,1], 'num_hid_neurons':[75, 50, 25, 10, 5], 'hid_activation':['sigmoid', 'tanh','relu','elu'], 'optimizer':['plain SGD','momentum','nesterov','adagrad','rmsprop','adam','learning rate scheduling']}]
@@ -70,10 +71,11 @@ num_hid_layers = [5,4,3,2,1]
 num_hid_neurons=[75, 50, 25, 10, 5]
 hid_activation=['sigmoid', 'tanh','relu','elu']
 optimizer=['plain SGD','momentum','nesterov','adagrad','rmsprop','adam','learning rate scheduling']
+initializer=['glorot_uniform', 'glorot_normal', 'he_normal', 'he_uniform']
 
-param_grid= dict(learning_rate = learning_rate, num_hid_layers=num_hid_layers, num_hid_neurons=num_hid_neurons, hid_activation=hid_activation,optimizer=optimizer)
+param_grid= dict(learning_rate = learning_rate, num_hid_layers=num_hid_layers, num_hid_neurons=num_hid_neurons, hid_activation=hid_activation,optimizer=optimizer, initializer=initializer)
 
-def createModel(learning_rate, num_hid_layers, num_hid_neurons, hid_activation, optimizer):
+def createModel(learning_rate, num_hid_layers, num_hid_neurons, hid_activation, optimizer, initializer):
     #Create model
     model = keras.Sequential()
     
@@ -82,10 +84,10 @@ def createModel(learning_rate, num_hid_layers, num_hid_neurons, hid_activation, 
     
     #Add dense layers
     for layer in range(num_hid_layers):
-        model.add(layers.Dense(units=num_hid_neurons, activation=hid_activation))
+        model.add(layers.Dense(units=num_hid_neurons, activation=hid_activation, kernel_initializer=initializer))
         
     #output layer
-    model.add(layers.Dense(units=1, activation = "linear"))
+    model.add(layers.Dense(units=1, activation = "softmax",kernel_initializer=initializer))
     
     #make opimizer
     if optimizer == 'plain SGD':
@@ -109,7 +111,7 @@ def createModel(learning_rate, num_hid_layers, num_hid_neurons, hid_activation, 
         return -1
     
     #compile model
-    model.compile(loss = 'mse', optimizer=optimizerCode, metrics=['accuracy'])
+    model.compile(loss = 'mae', optimizer=optimizerCode)
     
     return model
 
@@ -131,7 +133,7 @@ for mean, stdev, param in zip(means, stds, params):
     print("%f (%f) with: %r" % (mean, stdev, param))
     
 #Random search
-rnd_search = RandomizedSearchCV(model, param_grid, n_iter =10, cv=3)
+rnd_search = RandomizedSearchCV(model, param_grid, n_iter =20, cv=3)
 rnd_search.fit(X,Y)
 
 # summarize results
@@ -141,5 +143,11 @@ stds = rnd_search.cv_results_['std_test_score']
 params = rnd_search.cv_results_['params']
 for mean, stdev, param in zip(means, stds, params):
     print("%f (%f) with: %r" % (mean, stdev, param))
+    
+    
+model = createModel(.2,3,5,'tanh','rmsprop','glorot_normal')
 
+model.fit(X_train, Y_train,epochs=10,batch_size=10000)
+model.summary()
 
+y = model.predict(X_test)
