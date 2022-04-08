@@ -1,15 +1,16 @@
 #This is the final model file
 import tensorflow as tf
-import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers import Dense
-from keras.wrappers.scikit_learn import KerasClassifier
+from keras.wrappers.scikit_learn import KerasRegressor
+from sklearn.model_selection import RepeatedStratifiedKFold
+
 
 # Read in data
 DATA = pd.read_csv('pricing.csv')
@@ -42,7 +43,7 @@ def createNeuralNet(learning_rate, numHiddenLayers, numHiddenNeurons, hiddenActi
     elif optimizer == 'nesterov':
         optimizerCode = tf.keras.optimizers.SGD(learning_rate = learning_rate, momentum = .9, nesterov=True)
     elif optimizer == 'adagrad':
-        optimizerCode = tf.keras.optimzers.Adagrad(learning_rate=learning_rate, initial_accumulator_value=0.1, epsilon=1e-07)
+        optimizerCode = tf.keras.optimizers.Adagrad(learning_rate=learning_rate, initial_accumulator_value=0.1, epsilon=1e-07)
     elif optimizer == 'rmsprop':
         optimizerCode = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, rho=.9,momentum=0.0,epsilon=1e-07)
     elif optimizer == 'adam':
@@ -50,7 +51,7 @@ def createNeuralNet(learning_rate, numHiddenLayers, numHiddenNeurons, hiddenActi
     elif optimizer == 'learning rate scheduling':
         initial_learning_rate = learning_rate; decay_steps = 10000; decay_rate = .95
         learning_sched = tf.keras.optimizers.schedules.ExponentialDecay(initial_learning_rate,decay_steps, decay_rate)
-        optimizerCode = tf.keras.optimzers.SGD(learning_rate=learning_sched)
+        optimizerCode = tf.keras.optimizers.SGD(learning_rate=learning_sched)
     else:
         print('Error making optimizer')
         return -1
@@ -62,10 +63,17 @@ def createNeuralNet(learning_rate, numHiddenLayers, numHiddenNeurons, hiddenActi
     return model
     
 #Make Grid of all possible parameters
-param_grid = [{'learning_rate':[.001,.01,.1,.2,.3], 'num_hid_layers':[5,4,3,2,1], 'num_hid_neurons':[200, 150, 125, 100, 75, 50, 25, 10, 5], 'hid_activation':['sigmoid', 'tanh','relu','elu','leaky relu','elu'], 'optimizer':['plain SGD','momentum','nesterov','adagrad','rmsprop','adam','learning rate scheduling']}]
+#param_grid = [{'learning_rate':[.001,.01,.1,.2,.3], 'num_hid_layers':[5,4,3,2,1], 'num_hid_neurons':[75, 50, 25, 10, 5], 'hid_activation':['sigmoid', 'tanh','relu','elu'], 'optimizer':['plain SGD','momentum','nesterov','adagrad','rmsprop','adam','learning rate scheduling']}]
 
+learning_rate = [.001,.01,.1,.2,.3]
+num_hid_layers = [5,4,3,2,1]
+num_hid_neurons=[75, 50, 25, 10, 5]
+hid_activation=['sigmoid', 'tanh','relu','elu']
+optimizer=['plain SGD','momentum','nesterov','adagrad','rmsprop','adam','learning rate scheduling']
 
-def createModel(learning_rate, num_hid_layers, num_hid_neurons, hid_activation,optimizer):
+param_grid= dict(learning_rate = learning_rate, num_hid_layers=num_hid_layers, num_hid_neurons=num_hid_neurons, hid_activation=hid_activation,optimizer=optimizer)
+
+def createModel(learning_rate, num_hid_layers, num_hid_neurons, hid_activation, optimizer):
     #Create model
     model = keras.Sequential()
     
@@ -108,10 +116,10 @@ def createModel(learning_rate, num_hid_layers, num_hid_neurons, hid_activation,o
 #Batch sizes
 {'batch_size':[100000, 50000, 10000, 5000, 1000]}
 
-model = KerasClassifier(build_fn=createModel, epochs=100, batch_size=1000, verbose=0)
+model = KerasRegressor(build_fn=createModel, epochs=10, batch_size=100000, verbose=0)
 
 #Grid search
-grid = GridSearchCV(estimator=model, param_grid=param_grid, cv=3)
+grid = GridSearchCV(estimator=model, param_grid=param_grid)
 gridResult = grid.fit(X,Y)
 
 # summarize results
@@ -121,3 +129,17 @@ stds = gridResult.cv_results_['std_test_score']
 params = gridResult.cv_results_['params']
 for mean, stdev, param in zip(means, stds, params):
     print("%f (%f) with: %r" % (mean, stdev, param))
+    
+#Random search
+rnd_search = RandomizedSearchCV(model, param_grid, n_iter =10, cv=3)
+rnd_search.fit(X,Y)
+
+# summarize results
+print("Best: %f using %s" % (rnd_search.best_score_, rnd_search.best_params_))
+means = rnd_search.cv_results_['mean_test_score']
+stds = rnd_search.cv_results_['std_test_score']
+params = rnd_search.cv_results_['params']
+for mean, stdev, param in zip(means, stds, params):
+    print("%f (%f) with: %r" % (mean, stdev, param))
+
+
