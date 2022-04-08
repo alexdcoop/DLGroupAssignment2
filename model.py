@@ -11,8 +11,9 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.wrappers.scikit_learn import KerasRegressor
 from sklearn.model_selection import RepeatedStratifiedKFold
+from ann_visualizer.visualize import ann_viz
 
-
+#1. Prepare data
 # Read in data
 DATA = pd.read_csv('pricing.csv')
 
@@ -62,7 +63,8 @@ X_train, X_test, Y_train, Y_test = train_test_split(X,Y,test_size=0.2)
 
 #     #return model
 #     return model
-    
+
+#2. Create a grid of parameter values    
 #Make Grid of all possible parameters
 #param_grid = [{'learning_rate':[.001,.01,.1,.2,.3], 'num_hid_layers':[5,4,3,2,1], 'num_hid_neurons':[75, 50, 25, 10, 5], 'hid_activation':['sigmoid', 'tanh','relu','elu'], 'optimizer':['plain SGD','momentum','nesterov','adagrad','rmsprop','adam','learning rate scheduling']}]
 
@@ -75,6 +77,7 @@ initializer=['glorot_uniform', 'glorot_normal', 'he_normal', 'he_uniform']
 
 param_grid= dict(learning_rate = learning_rate, num_hid_layers=num_hid_layers, num_hid_neurons=num_hid_neurons, hid_activation=hid_activation,optimizer=optimizer, initializer=initializer)
 
+#3. Create a function that takes values of the grid, and returns a compiled model architecture 
 def createModel(learning_rate, num_hid_layers, num_hid_neurons, hid_activation, optimizer, initializer):
     #Create model
     model = keras.Sequential()
@@ -124,6 +127,7 @@ model = KerasRegressor(build_fn=createModel, epochs=10, batch_size=100000, verbo
 grid = GridSearchCV(estimator=model, param_grid=param_grid)
 gridResult = grid.fit(X,Y)
 
+
 # summarize results
 print("Best: %f using %s" % (gridResult.best_score_, gridResult.best_params_))
 means = gridResult.cv_results_['mean_test_score']
@@ -151,3 +155,7 @@ model.fit(X_train, Y_train,epochs=10,batch_size=10000)
 model.summary()
 
 y = model.predict(X_test)
+
+#5. Plot results
+
+ann_viz(model, title="Our Neural Network", filename="dlproj2.gv", view = True) #should produce a visual of the neural net
