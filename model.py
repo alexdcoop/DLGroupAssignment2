@@ -1,5 +1,4 @@
 #This is the final model file
-from asyncio.unix_events import BaseChildWatcher
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -73,7 +72,11 @@ hid_activation=['sigmoid', 'tanh','relu','elu']
 optimizer=['plain SGD','momentum','nesterov','adagrad','rmsprop','adam','learning rate scheduling']
 initializer=['glorot_uniform', 'glorot_normal', 'he_normal', 'he_uniform']
 
-param_grid= dict(learning_rate = learning_rate, num_hid_layers=num_hid_layers, num_hid_neurons=num_hid_neurons, hid_activation=hid_activation,optimizer=optimizer, initializer=initializer)
+#Generate all combinations
+import itertools
+a = [learning_rate,num_hid_layers,num_hid_neurons,hid_activation,optimizer, initializer]
+allCombinations = list(itertools.product(*a))
+
 
 def createModel(learning_rate, num_hid_layers, num_hid_neurons, hid_activation, optimizer, initializer):
     #Create model
@@ -111,43 +114,74 @@ def createModel(learning_rate, num_hid_layers, num_hid_neurons, hid_activation, 
         return -1
     
     #compile model
-    model.compile(loss = 'mae', optimizer=optimizerCode)
+    model.compile(loss = 'mae', optimizer=optimizerCode, metrics=['accuracy'])
     
     return model
 
-#Batch sizes
-{'batch_size':[100000, 50000, 10000, 5000, 1000]}
 
-model = KerasRegressor(build_fn=createModel, epochs=10, batch_size=100000, verbose=0)
+epochs = 10
+batchSize = 100000
 
-#Grid search
-grid = GridSearchCV(estimator=model, param_grid=param_grid)
-gridResult = grid.fit(X,Y)
-
-# summarize results
-print("Best: %f using %s" % (gridResult.best_score_, gridResult.best_params_))
-means = gridResult.cv_results_['mean_test_score']
-stds = gridResult.cv_results_['std_test_score']
-params = gridResult.cv_results_['params']
-for mean, stdev, param in zip(means, stds, params):
-    print("%f (%f) with: %r" % (mean, stdev, param))
+for record in allCombinations: 
+    model = createModel(learning_rate = record[0], num_hid_layers = record[1], num_hid_neurons = record[2], hid_activation = record[3], optimizer = record[4], initializer = record[5])
     
-#Random search
-rnd_search = RandomizedSearchCV(model, param_grid, n_iter =20, cv=3)
-rnd_search.fit(X,Y)
+    avgLoss_array = []
+    #Go through each epoch
+    for _ in range(epochs):
+        
+        lossArr = []
+        #Go through each record of data
+        for _ in range(len(X_train)): #this is the subsetted data that gets pulled into the lower part of the for loop to train the model 
+            #Fit model
+            model.fit(X_train,Y_train,epochs=1,batch_size=batchSize)
+            #Get loss
+            loss = "TBD"
+            #append to lossArr
+            lossArr.append(loss)
+        
+        #Get average loss
+        avg_loss = "TBD"
+    
+        #make a prediction on entire validation set and compute average log_loss
+        avgLoss_array.append(avg_loss) #append average loss to an array additional column in grid 
+        
+        
+    #store loss array in last column of grid grid['new column'] = loss_array (keep a counter) 
 
-# summarize results
-print("Best: %f using %s" % (rnd_search.best_score_, rnd_search.best_params_))
-means = rnd_search.cv_results_['mean_test_score']
-stds = rnd_search.cv_results_['std_test_score']
-params = rnd_search.cv_results_['params']
-for mean, stdev, param in zip(means, stds, params):
-    print("%f (%f) with: %r" % (mean, stdev, param))
+
+# #Batch sizes
+# {'batch_size':[100000, 50000, 10000, 5000, 1000]}
+
+# model = KerasRegressor(build_fn=createModel, epochs=10, batch_size=100000, verbose=0)
+
+# #Grid search
+# grid = GridSearchCV(estimator=model, param_grid=param_grid)
+# gridResult = grid.fit(X,Y)
+
+# # summarize results
+# print("Best: %f using %s" % (gridResult.best_score_, gridResult.best_params_))
+# means = gridResult.cv_results_['mean_test_score']
+# stds = gridResult.cv_results_['std_test_score']
+# params = gridResult.cv_results_['params']
+# for mean, stdev, param in zip(means, stds, params):
+#     print("%f (%f) with: %r" % (mean, stdev, param))
+    
+# #Random search
+# rnd_search = RandomizedSearchCV(model, param_grid, n_iter =20, cv=3)
+# rnd_search.fit(X,Y)
+
+# # summarize results
+# print("Best: %f using %s" % (rnd_search.best_score_, rnd_search.best_params_))
+# means = rnd_search.cv_results_['mean_test_score']
+# stds = rnd_search.cv_results_['std_test_score']
+# params = rnd_search.cv_results_['params']
+# for mean, stdev, param in zip(means, stds, params):
+#     print("%f (%f) with: %r" % (mean, stdev, param))
     
     
-model = createModel(.2,3,5,'tanh','rmsprop','glorot_normal')
+# model = createModel(.2,3,5,'tanh','rmsprop','glorot_normal')
 
-model.fit(X_train, Y_train,epochs=10,batch_size=10000)
-model.summary()
+# model.fit(X_train, Y_train,epochs=10,batch_size=10000)
+# model.summary()
 
-y = model.predict(X_test)
+# y = model.predict(X_test)
