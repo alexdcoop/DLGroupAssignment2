@@ -183,6 +183,7 @@ plt.xlabel('Epoch')
 plt.ylabel('MAE')
 plt.show()
     
+ann_viz(model, title="Our Neural Network", filename="dlproj2.gv", view = True) #should produce a visual of the neural net
         
 
 # #Batch sizes
