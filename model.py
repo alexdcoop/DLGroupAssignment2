@@ -176,10 +176,12 @@ for record in randomCombinations:
      
         
 
-
-
-
-
+#plots   
+import matplotlib.pyplot as plt    
+plt.plot(losses)
+plt.xlabel('Epoch')
+plt.ylabel('MAE')
+plt.show()
     
         
 
