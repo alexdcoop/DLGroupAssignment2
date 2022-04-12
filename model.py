@@ -1,16 +1,14 @@
 #This is the final model file
-from tabnanny import verbose
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers import Dense
-from keras.wrappers.scikit_learn import KerasRegressor
-from sklearn.model_selection import RepeatedStratifiedKFold
+from random import sample
+from sklearn.metrics import mean_absolute_error
 
 
 # Read in data
@@ -141,11 +139,12 @@ combinations = []
 losses = []
 epochs = 100
 batchSize = 100000
+numCombinations = 100
 
 #use random subset
+randomCombinations = sample(allCombinations,numCombinations)
 
-
-for record in allCombinations: 
+for record in randomCombinations: 
     #Create Model
     model = createModel(learning_rate = record[0], num_hid_layers = record[1], num_hid_neurons = record[2], hid_activation = record[3], optimizer = record[4], initializer = record[5])
     
@@ -154,13 +153,19 @@ for record in allCombinations:
         #fit model
         model.fit(X_train,Y_train,epochs=1,batch_size=batchSize, verbose=0)
         
+        #predict
         yhat = model.predict(X_test)
         
         #compute loss (Keep 100 loss values)
         #manually compute loss
         #use built in tf mae loss function
+        lossList.append(mean_absolute_error(Y_test, yhat)) #append to list
+    
+    #append to combinations and lossess
+    combinations.append(record)
+    losses.append(lossList)
+     
         
-        #append to list
 
 
 
