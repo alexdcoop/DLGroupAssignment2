@@ -91,6 +91,7 @@ def createModel(learning_rate, num_hid_layers, num_hid_neurons, hid_activation, 
 
 combinations = []
 losses = []
+models = []
 epochs = 10
 batchSize = 100000
 numCombinations = 50
@@ -99,43 +100,87 @@ numCombinations = 50
 randomCombinations = sample(allCombinations,numCombinations)
 
 for record in randomCombinations: 
-    #Create Model
-    model = createModel(learning_rate = record[0], num_hid_layers = record[1], num_hid_neurons = record[2], hid_activation = record[3], optimizer = record[4], initializer = record[5])
     
-    lossList = []
-    for _ in range(epochs):
-        #fit model
-        model.fit(X_train,Y_train,epochs=1,batch_size=batchSize, verbose=0)
+    try:    
+        #Create Model
+        model = createModel(learning_rate = record[0], num_hid_layers = record[1], num_hid_neurons = record[2], hid_activation = record[3], optimizer = record[4], initializer = record[5])
         
-        #predict
-        yhat = model.predict(X_test)
+        lossList = []
+        for _ in range(epochs):
+            #fit model
+            model.fit(X_train,Y_train,epochs=1,batch_size=batchSize, verbose=0)
+            
+            #predict
+            yhat = model.predict(X_test)
+            
+            #compute loss (Keep 100 loss values)
+            #manually compute loss
+            #use built in tf mae loss function
+            lossList.append(mean_absolute_error(Y_test, yhat)) #append to list
         
-        #compute loss (Keep 100 loss values)
-        #manually compute loss
-        #use built in tf mae loss function
-        lossList.append(mean_absolute_error(Y_test, yhat)) #append to list
-    
-    #append to combinations and lossess
-    combinations.append(record)
-    losses.append(lossList)
+        #append to combinations and lossess
+        combinations.append(record)
+        losses.append(lossList)
+        models.append(model)
+        
+    except:
+        print(f'{record} did not work')
+        continue
      
      
 
 #best model
 minLosses = [np.min(loss) for loss in losses]
 bestIndex = np.argmin(minLosses)
-bestModel = 
-best = np.argmin(losses)   
-bestmodel = combinations[best]
+bestmodel = models[bestIndex]
 
-#plots   
+bestCombination = combinations[bestIndex]
+
+
+#plot best model   
 import matplotlib.pyplot as plt
 for i in range(len(losses)):
-    plt.plot(losses[i]) 
-plt.plot(losses)
+    plt.plot(losses[i])    
 plt.xlabel('Epoch')
 plt.ylabel('MAE')
 plt.show()
+
+#visulize NN
+ann_viz(bestmodel, title="Our Neural Network", filename="dlproj2.gv", view = True) #should produce a visual of the neural net
+        
+
+# #Batch sizes
+# {'batch_size':[100000, 50000, 10000, 5000, 1000]}
+
+# model = KerasRegressor(build_fn=createModel, epochs=10, batch_size=100000, verbose=0)
+
+# #Grid search
+# grid = GridSearchCV(estimator=model, param_grid=param_grid)
+# gridResult = grid.fit(X,Y)
+
+# # summarize results
+# print("Best: %f using %s" % (gridResult.best_score_, gridResult.best_params_))
+# means = gridResult.cv_results_['mean_test_score']
+# stds = gridResult.cv_results_['std_test_score']
+# params = gridResult.cv_results_['params']
+# for mean, stdev, param in zip(means, stds, params):
+#     print("%f (%f) with: %r" % (mean, stdev, param))
     
-#ann_viz(bestmodel, title="Our Neural Network", filename="dlproj2.gv", view = True) #should produce a visual of the neural net
+# #Random search
+#rnd_search = RandomizedSearchCV(model, param_grid, n_iter =20, cv=3)
+#rnd_search.fit(X_train,Y_train)
+
+# # summarize results
+# print("Best: %f using %s" % (rnd_search.best_score_, rnd_search.best_params_))
+# means = rnd_search.cv_results_['mean_test_score']
+# stds = rnd_search.cv_results_['std_test_score']
+# params = rnd_search.cv_results_['params']
+# for mean, stdev, param in zip(means, stds, params):
+#     print("%f (%f) with: %r" % (mean, stdev, param))
+    
+    
+# model = createModel(.2,3,5,'tanh','rmsprop','glorot_normal')
+
+# model.fit(X_train, Y_train,epochs=10,batch_size=10000)
+# model.summary()
 
