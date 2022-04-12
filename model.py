@@ -174,7 +174,9 @@ for record in randomCombinations:
     combinations.append(record)
     losses.append(lossList)
      
-        
+#best model
+best = np.argmin(losses)   
+bestmodel = combinations[best]
 
 #plots   
 import matplotlib.pyplot as plt    
@@ -183,7 +185,7 @@ plt.xlabel('Epoch')
 plt.ylabel('MAE')
 plt.show()
     
-ann_viz(model, title="Our Neural Network", filename="dlproj2.gv", view = True) #should produce a visual of the neural net
+ann_viz(bestmodel, title="Our Neural Network", filename="dlproj2.gv", view = True) #should produce a visual of the neural net
         
 
 # #Batch sizes
