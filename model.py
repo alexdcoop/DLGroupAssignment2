@@ -146,9 +146,10 @@ def createModel(learning_rate, num_hid_layers, num_hid_neurons, hid_activation, 
 
 combinations = []
 losses = []
-epochs = 100
+models = []
+epochs = 10
 batchSize = 100000
-numCombinations = 100
+numCombinations = 2
 
 #use random subset
 randomCombinations = sample(allCombinations,numCombinations)
@@ -173,18 +174,25 @@ for record in randomCombinations:
     #append to combinations and lossess
     combinations.append(record)
     losses.append(lossList)
+    models.append(model)
      
 #best model
-best = np.argmin(losses)   
-bestmodel = combinations[best]
+minLosses = [np.min(loss) for loss in losses]
+bestIndex = np.argmin(minLosses)
+bestmodel = models[bestIndex]
 
-#plots   
-import matplotlib.pyplot as plt    
-plt.plot(losses)
+bestCombination = combinations[bestIndex]
+
+
+#plot best model   
+import matplotlib.pyplot as plt
+for i in range(len(losses)):
+    plt.plot(losses[i])    
 plt.xlabel('Epoch')
 plt.ylabel('MAE')
 plt.show()
-    
+
+#visulize NN
 ann_viz(bestmodel, title="Our Neural Network", filename="dlproj2.gv", view = True) #should produce a visual of the neural net
         
 
