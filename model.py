@@ -9,6 +9,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 from random import sample
 from sklearn.metrics import mean_absolute_error
+from ann_visualizer.visualize import ann_viz
 
 
 # Read in data
