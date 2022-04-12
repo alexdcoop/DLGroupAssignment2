@@ -64,13 +64,14 @@ X_train, X_test, Y_train, Y_test = train_test_split(X,Y,test_size=0.2)
     
 #Make Grid of all possible parameters
 #param_grid = [{'learning_rate':[.001,.01,.1,.2,.3], 'num_hid_layers':[5,4,3,2,1], 'num_hid_neurons':[75, 50, 25, 10, 5], 'hid_activation':['sigmoid', 'tanh','relu','elu'], 'optimizer':['plain SGD','momentum','nesterov','adagrad','rmsprop','adam','learning rate scheduling']}]
-
+glorot_sigm_init = keras.initializers.VarianceScaling(scale = 16, mode ='fan_avg', distribution = 'untruncated_normal')
+he_avg)init = keras.initializers.VarianceScaling(scale = 2, mode = 'fan_avg', distribution = 'untruncated_normal')
 learning_rate = [.001,.01,.1,.2,.3]
 num_hid_layers = [5,4,3,2,1]
 num_hid_neurons=[75, 50, 25, 10, 5]
 hid_activation=['sigmoid', 'tanh','relu','elu']
 optimizer=['plain SGD','momentum','nesterov','adagrad','rmsprop','adam','learning rate scheduling']
-initializer=['glorot_uniform', 'glorot_normal', 'he_normal', 'he_uniform']
+initializer=['glorot_normal', 'glorot_sigm_init' 'he_normal', 'he_avg_init']
 
 #Generate all combinations
 import itertools
