@@ -81,6 +81,7 @@ def createNeuralNet(learning_rate, num_hid_layers, num_hid_neurons, hid_activati
 #param_grid = [{'learning_rate':[.001,.01,.1,.2,.3], 'num_hid_layers':[5,4,3,2,1], 'num_hid_neurons':[75, 50, 25, 10, 5], 'hid_activation':['sigmoid', 'tanh','relu','elu'], 'optimizer':['plain SGD','momentum','nesterov','adagrad','rmsprop','adam','learning rate scheduling']}]
 glorot_sigm_init = keras.initializers.VarianceScaling(scale = 16, mode ='fan_avg', distribution = 'untruncated_normal')
 he_avg_init = keras.initializers.VarianceScaling(scale = 2, mode = 'fan_avg', distribution = 'untruncated_normal')
+
 learning_rate = [.001,.01,.1,.2,.3]
 num_hid_layers = [5,4,3,2,1]
 num_hid_neurons=[75, 50, 25, 10, 5]
@@ -100,6 +101,12 @@ def createModel(learning_rate, num_hid_layers, num_hid_neurons, hid_activation, 
     
     #Add input layer
     model.add(keras.Input(shape=(X.shape[1],)))
+
+    #make initialiizer
+    #if initializer == 'glorot_sigm_init':
+    #    initializer = keras.initializers.VarianceScaling(scale = 16, mode ='fan_avg', distribution = 'untruncated_normal')
+    #elif initializer == 'he_avg_init':
+    #    initializer = keras.initializers.VarianceScaling(scale = 2, mode = 'fan_avg', distribution = 'untruncated_normal')
     
     #Add dense layers
     for layer in range(num_hid_layers):
